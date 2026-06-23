@@ -1,0 +1,37 @@
+{
+  "name": "BBQDN",
+  "type": "module",
+  "module": "index.ts",
+  "private": true,
+  "workspaces": [
+    "app/*",
+    "package/*"
+  ],
+  "scripts": {
+    "db:migrate": "bun --env-file=../../.env --cwd=app/server run migrate",
+    "db:migrate:prod": "bun --env-file=../../.env --cwd=app/server run migrate:prod",
+    "db:studio": "bun --env-file=../../.env --cwd=app/server run studio",
+    "db:studio:prod": "bun --env-file=../../.env --cwd=app/server run studio:prod",
+    "dev:server": "bun --env-file=../../.env --cwd=app/server run dev",
+    "dev:frontend": "bun --env-file=../../.env --cwd=app/frontend run dev",
+    "dev": "concurrently \"bun run dev:server\" \"bun run dev:frontend\"",
+    "start:server": "bun --env-file=../../.env --cwd=app/server run start",
+    "start:frontend": "bun --env-file=../../.env --cwd=app/frontend run start",
+    "build": "bun --env-file=../../.env --cwd=app/frontend run build",
+    "start": "concurrently \"bun run start:server\" \"bun run start:frontend\"",
+    "prestart": "bun run build"
+  },
+  "devDependencies": {
+    "@app/logger": "workspace:*",
+    "@app/frontend": "workspace:*",
+    "@app/server": "workspace:*",
+    "@types/bun": "latest",
+    "concurrently": "^10.0.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@bepalo/query": "^2.3.11"
+  }
+}
