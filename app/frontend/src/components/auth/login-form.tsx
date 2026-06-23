@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useId, useState } from "react";
 import SigninWithGoogleImage from "@/assets/brand/signin-with-google.svg";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,8 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const emailId = useId();
+  const passwordId = useId();
 
   const handleLogin = (e: React.SubmitEvent) => {
     e.preventDefault();
@@ -64,7 +66,7 @@ export function LoginForm({
               <Field>
                 {/* <FieldLabel htmlFor="email">Email</FieldLabel> */}
                 <Input
-                  id="email"
+                  id={emailId}
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -75,7 +77,7 @@ export function LoginForm({
               <Field>
                 {/* <FieldLabel htmlFor="password">Password</FieldLabel> */}
                 <Input
-                  id="password"
+                  id={passwordId}
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

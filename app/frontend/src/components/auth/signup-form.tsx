@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { type ComponentProps, type SubmitEvent, useState } from "react";
+import { type ComponentProps, type SubmitEvent, useId, useState } from "react";
 import SignupWithGoogleImage from "@/assets/brand/signup-with-google.svg";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +27,10 @@ export function SignupForm({ className, ...props }: ComponentProps<"div">) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const nameId = useId();
+  const emailId = useId();
+  const passwordId = useId();
+
   const handleSignup = (e: SubmitEvent) => {
     e.preventDefault();
     authClient.signUp.email({
@@ -66,7 +70,7 @@ export function SignupForm({ className, ...props }: ComponentProps<"div">) {
               <Field>
                 {/* <FieldLabel htmlFor="name">Name</FieldLabel> */}
                 <Input
-                  id="name"
+                  id={nameId}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   type="text"
@@ -77,7 +81,7 @@ export function SignupForm({ className, ...props }: ComponentProps<"div">) {
               <Field>
                 {/* <FieldLabel htmlFor="email">Email</FieldLabel> */}
                 <Input
-                  id="email"
+                  id={emailId}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   type="email"
@@ -88,7 +92,7 @@ export function SignupForm({ className, ...props }: ComponentProps<"div">) {
               <Field>
                 {/* <FieldLabel htmlFor="password">Password</FieldLabel> */}
                 <Input
-                  id="password"
+                  id={passwordId}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   type="password"

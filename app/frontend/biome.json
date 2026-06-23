@@ -15,22 +15,20 @@
     "indentWidth": 2
   },
   "linter": {
-    "enabled": true,
     "rules": {
-      "recommended": true,
-      "suspicious": {
-        "noUnknownAtRules": "off"
+      "style": {
+        "useNodejsImportProtocol": "off",
+        "useImportType": "off"
+      },
+      "correctness": {
+        "noUnusedImports": "warn"
       }
-    },
-    "domains": {
-      "next": "recommended",
-      "react": "recommended"
     }
   },
   "assist": {
     "actions": {
       "source": {
-        "organizeImports": "on"
+        "organizeImports": "off"
       }
     }
   }
