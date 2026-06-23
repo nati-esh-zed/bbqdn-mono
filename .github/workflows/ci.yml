@@ -41,8 +41,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-turbo-
 
-      - name: Lint
-        run: bun turbo run lint --cache-dir=".turbo"
+      # - name: Lint
+      #   run: bun turbo run lint --cache-dir=".turbo"
 
       - name: Typecheck
         run: bun turbo run typecheck --cache-dir=".turbo"

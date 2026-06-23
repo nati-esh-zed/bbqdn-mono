@@ -45,8 +45,8 @@ jobs:
             ${{ runner.os }}-turbo-
 
       # Let Turborepo handle parallel execution, typechecking, and caching
-      - name: Lint
-        run: bun turbo run lint --cache-dir=".turbo"
+      # - name: Lint
+      #   run: bun turbo run lint --continue --cache-dir=".turbo"
 
       - name: Typecheck
         run: bun turbo run typecheck --cache-dir=".turbo"

@@ -37,6 +37,9 @@
     "start": { "cache": false, "persistent": true },
     "migrate": { "cache": false },
     "migrate:prod": { "cache": false },
-    "studio": { "cache": false, "persistent": true }
+    "studio": { "cache": false, "persistent": true },
+    "typecheck": {
+      "dependsOn": ["^typecheck"]
+    }
   }
 }
