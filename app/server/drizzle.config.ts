@@ -1,10 +1,10 @@
 // apps/server/drizzle.config.ts
 import { defineConfig } from "drizzle-kit";
 
-import { PROD_DATABASE } from "@common/config";
+import { env } from "@common/env";
 
 export default defineConfig(
-  PROD_DATABASE
+  env.USE_PROD_DATABASE
     ? {
         out: "./.drizzle/pg",
         schema: "./src/database/schema/pg.ts",

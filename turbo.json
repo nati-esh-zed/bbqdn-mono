@@ -1,0 +1,42 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalEnv": [
+    "NODE_ENV",
+    "PORT",
+    "SERVER_PORT",
+    "USE_PROD_DATABASE",
+    "DATABASE_FILE_NAME",
+    "DATABASE_URL",
+    "NEXT_PUBLIC_APP_URL",
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_URL",
+    "BETTER_AUTH_TRUSTED_ORIGINS",
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET"
+  ],
+  "tasks": {
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": [
+        "NEXT_PUBLIC_APP_URL",
+        "BETTER_AUTH_TRUSTED_ORIGINS",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET"
+      ]
+    },
+    "lint": { "dependsOn": ["^lint"] },
+    "format": {},
+    "db:migrate": { "cache": false },
+    "db:migrate:prod": { "cache": false },
+    "db:studio": { "cache": false, "persistent": true },
+    "start": { "cache": false, "persistent": true },
+    "migrate": { "cache": false },
+    "migrate:prod": { "cache": false },
+    "studio": { "cache": false, "persistent": true }
+  }
+}

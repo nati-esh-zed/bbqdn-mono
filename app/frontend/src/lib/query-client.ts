@@ -1,6 +1,6 @@
 import type { Database, Schema } from "@app/server/database";
 import { createQueryClient } from "@bepalo/query/client";
-import type { InferSelectModel, Table } from "drizzle-orm";
+// import type { InferSelectModel, Table } from "drizzle-orm";
 
 export type { Database, Schema } from "@app/server/database";
 export type {

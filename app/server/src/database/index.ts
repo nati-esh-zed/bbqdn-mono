@@ -5,11 +5,11 @@ import { createClient } from "@libsql/client";
 import { Pool } from "pg";
 import * as sqSchema from "./schema/sq";
 import * as pgSchema from "./schema/pg";
-import { PROD_DATABASE } from "@common/config";
+import { env } from "@common/env";
 
-export const schema = PROD_DATABASE ? pgSchema : sqSchema;
+export const schema = env.USE_PROD_DATABASE ? pgSchema : sqSchema;
 
-export const database = PROD_DATABASE
+export const database = env.USE_PROD_DATABASE
   ? drizzlePG({
       client: new Pool({
         connectionString: process.env.DATABASE_URL!,

@@ -1,0 +1,73 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend: # Renamed service to 'backend' to explicitly match the docker.conf.template proxy route
+    build:
+      context: .
+      dockerfile: app/server/Dockerfile
+    ports:
+      - "${SERVER_PORT:-4000}:${SERVER_PORT:-4000}"
+    environment:
+      DATABASE_FILE_NAME: ${DATABASE_FILE_NAME}
+      DATABASE_URL: ${DATABASE_URL}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL}
+      BETTER_AUTH_TRUSTED_ORIGINS: ${BETTER_AUTH_TRUSTED_ORIGINS}
+      SERVER_PORT: ${SERVER_PORT:-4000}
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: .
+      dockerfile: app/frontend/Dockerfile
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    environment:
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+      DATABASE_FILE_NAME: ${DATABASE_FILE_NAME}
+      DATABASE_URL: ${DATABASE_URL}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL}
+      BETTER_AUTH_TRUSTED_ORIGINS: ${BETTER_AUTH_TRUSTED_ORIGINS}
+      PORT: ${PORT:-3000}
+    volumes:
+      - next_static:/app/app/frontend/.next/static
+      - next_public:/app/app/frontend/public
+    depends_on:
+      - backend
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # FIX: Mount the concrete generated configuration file built by envsubst in your CI
+      - ./nginx/docker.conf:/etc/nginx/conf.d/default.conf:ro
+
+      # SSL Cert mappings utilizing paths injected dynamically from your master .env configurations
+      - ${SSL_CERT_DIR:-/etc/nginx/ssl}:${SSL_CERT_DIR:-/etc/nginx/ssl}:ro
+
+      # Shared static folder mounts populated by the frontend compilation container
+      - next_static:/data/next/static:ro
+      - next_public:/data/next/public:ro
+    depends_on:
+      - frontend
+      - backend
+
+volumes:
+  pgdata:
+  next_static:
+  next_public:

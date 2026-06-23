@@ -13,7 +13,11 @@ import {
   integer,
 } from "drizzle-orm/pg-core";
 
-export const userRolesEnum = pgEnum("user_roles", ["user", "admin"] as const);
+export const userRolesEnum = pgEnum("user_roles", [
+  "admin",
+  "user",
+  "moderator",
+] as const);
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),

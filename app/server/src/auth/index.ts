@@ -2,19 +2,17 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import database from "@app/server/database";
-import { PROD_DATABASE } from "@common/config";
+import { env } from "@common/env";
 import { z } from "zod";
 
 export const auth = betterAuth({
   database: drizzleAdapter(database, {
-    provider: PROD_DATABASE ? "pg" : "sqlite",
+    provider: env.USE_PROD_DATABASE ? "pg" : "sqlite",
   }),
 
-  baseURL: process.env.BETTER_AUTH_URL!,
+  baseURL: env.BETTER_AUTH_URL!,
 
-  trustedOrigins: process.env.BETTER_AUTH_TRUSTED_ORIGINS
-    ? JSON.parse(process.env.BETTER_AUTH_TRUSTED_ORIGINS)
-    : [process.env.BETTER_AUTH_URL],
+  trustedOrigins: env.BETTER_AUTH_TRUSTED_ORIGINS,
 
   emailAndPassword: {
     enabled: true,
@@ -22,8 +20,8 @@ export const auth = betterAuth({
 
   socialProviders: {
     google: {
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: env.GOOGLE_CLIENT_ID!,
+      clientSecret: env.GOOGLE_CLIENT_SECRET!,
     },
   },
 
@@ -35,7 +33,7 @@ export const auth = betterAuth({
         defaultValue: "user",
         input: true,
         validator: {
-          input: z.enum(["user", "admin"]),
+          input: z.enum(["user", "moderator"]),
         },
       },
     },

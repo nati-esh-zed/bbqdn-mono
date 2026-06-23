@@ -9,7 +9,7 @@ import {
   unique,
 } from "drizzle-orm/sqlite-core";
 
-export const userRolesEnum = ["user", "admin"] as const;
+export const userRolesEnum = ["admin", "user", "moderator"] as const;
 
 export const user = sqliteTable("user", {
   id: text("id").primaryKey(),

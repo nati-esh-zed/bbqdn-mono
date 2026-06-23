@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+    tags: ["v*"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Fetch all history so Turbo can calculate changes between commits
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # OPTIMIZATION: Cache Bun's global package store to accelerate 'bun install'
+      - name: Cache Bun Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      # OPTIMIZATION: Use Turborepo's filesystem caching across GitHub Action runs
+      - name: Cache Turbo Outputs
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      # Let Turborepo handle parallel execution, typechecking, and caching
+      - name: Lint
+        run: bun turbo run lint --cache-dir=".turbo"
+
+      - name: Typecheck
+        run: bun turbo run typecheck --cache-dir=".turbo"
+
+      # Dummy envs provided just so NextJS build evaluation step doesn't crash on ArkType checks
+      - name: Build Verification
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/app"
+          BETTER_AUTH_SECRET: "ci-secret-key"
+          BETTER_AUTH_URL: "https://example.com/api/auth"
+          BETTER_AUTH_TRUSTED_ORIGINS: '["https://example.com"]'
+        run: bun turbo run build --cache-dir=".turbo"
+
+  deploy:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            # Navigate to project directory or clone if it's the first run
+            if [ ! -d "~/BBQDN" ]; then
+              git clone https://github.com/${{ github.repository }}.git ~/BBQDN
+              cd ~/BBQDN
+            else
+              cd ~/BBQDN
+              git pull origin main
+            fi
+
+            # Clean and copy master environment variables from the host's home directory
+            if [ -f "$HOME/.env" ]; then
+              cp "$HOME/.env" .env
+              export $(cat .env | xargs)
+              echo "✅ Production environment variables synchronized and exported."
+            else
+              echo "❌ Error: Master .env file not found in $HOME. Pipeline deployment halted."
+              exit 1
+            fi
+
+            # Substitute variables inside the template file to build the fresh docker configuration
+            # Restricting substitution exclusively to configuration keys so native Nginx vars stay intact
+            envsubst '${SERVER_NAME} ${SSL_CERT} ${SSL_KEY} ${PORT} ${SERVER_PORT}' < nginx/docker.conf.template > nginx/docker.conf
+            echo "✅ Variable substitution complete. Generated nginx/docker.conf."
+
+            # Build and launch containers detached, pruning dangling build layers
+            docker compose down
+            docker compose up --build -d
+            docker system prune -f

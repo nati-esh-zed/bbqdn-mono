@@ -5,10 +5,12 @@ node_modules
 .sandbox
 *.http
 
+
 # output
 out
 dist
 *.tgz
+.turbo
 
 # code coverage
 coverage

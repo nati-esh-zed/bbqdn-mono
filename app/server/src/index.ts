@@ -1,4 +1,5 @@
 // apps/server/src/index.ts
+import { env } from "@common/env";
 import { auth } from "@/auth"; // better-auth
 import { createQueryRoute, SurpassMaxLimit } from "@bepalo/query";
 import { database, schema, type UserRoles } from "@app/server/database";
@@ -24,14 +25,12 @@ const queryRoute = createQueryRoute<UserRoles, CTXUserSession>({
 });
 
 // better-auth api path like /api/auth/*
-const betterAuthPath =
-  new URL(process.env.BETTER_AUTH_URL || "http://localhost/api/auth").pathname +
-  "/*";
+const betterAuthPath = new URL(env.BETTER_AUTH_URL).pathname + "/*";
 logInfo(`Better-Auth Path: ${betterAuthPath}`);
 
 // serve
 const server = Bun.serve({
-  port: parseInt(process.env.SERVER_PORT || "4000"),
+  port: env.SERVER_PORT,
   reusePort: true,
   routes: {
     [betterAuthPath]: auth.handler, // better-auth

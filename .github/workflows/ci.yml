@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+    tags: ["v*"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache Bun Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Cache Turbo Outputs
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Lint
+        run: bun turbo run lint --cache-dir=".turbo"
+
+      - name: Typecheck
+        run: bun turbo run typecheck --cache-dir=".turbo"
+
+      - name: Build
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/app"
+          BETTER_AUTH_SECRET: "ci-secret-key"
+          BETTER_AUTH_URL: "https://example.com/api/auth"
+          BETTER_AUTH_TRUSTED_ORIGINS: '["https://example.com"]'
+        run: bun turbo run build --cache-dir=".turbo"
+
+  deploy:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Manual Native SSH Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            export PATH="$HOME/.bun/bin:$PATH"
+
+            if [ ! -d "/var/www/bbqdn" ]; then
+              git clone https://github.com/${{ github.repository }}.git /var/www/bbqdn
+            fi
+
+            cd /var/www/bbqdn
+            git pull origin main
+
+            if [ -f "$HOME/.env" ]; then
+              cp "$HOME/.env" .env
+              export $(cat .env | xargs)
+              echo "✅ Production environment variables synchronized and exported."
+            else
+              echo "❌ Error: Master .env file not found in $HOME. Pipeline deployment halted."
+              exit 1
+            fi
+
+            # NEW: Compile template with specific environment fields, ignoring native Nginx variables
+            envsubst '${SERVER_NAME} ${SSL_CERT} ${SSL_KEY}' < nginx/raw.conf.template > nginx/raw.conf
+            echo "✅ Variable substitution complete. Built fresh nginx/raw.conf asset."
+
+            # Update symbolic host bindings dynamically
+            sudo ln -sf /var/www/bbqdn/nginx/raw.conf /etc/nginx/sites-available/bbqdn
+            sudo ln -sf /etc/nginx/sites-available/bbqdn /etc/nginx/sites-enabled/
+            sudo rm -f /etc/nginx/sites-enabled/default
+
+            bun install --frozen-lockfile
+            bun turbo run build
+            bun --env-file=.env turbo run migrate:prod
+
+            bun run pm2:reload
+            sudo nginx -t && sudo systemctl reload nginx

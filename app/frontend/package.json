@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "bun --bun next dev",
     "build": "bun --bun next build",
-    "start": "bun --bun next start",
+    "start": "mkdir -p .next/standalone/app/frontend/.next && cp -r public .next/standalone/app/frontend/ && cp -r .next/static .next/standalone/app/frontend/.next/ && bun .next/standalone/app/frontend/server.js",
     "lint": "biome check",
     "format": "biome format --write"
   },
@@ -13,6 +13,7 @@
     "@app/server": "workspace:*",
     "@base-ui/react": "^1.5.0",
     "@bepalo/query": "^2.3.12",
+    "arktype": "^2.2.1",
     "better-auth": "^1.6.14",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
